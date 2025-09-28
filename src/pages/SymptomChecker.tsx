@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { ArrowLeft, Send, Mic, Bot } from "lucide-react";
 
 interface Message {
   id: number;
@@ -16,29 +17,32 @@ const SymptomChecker = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "Hello! I'm your AI health assistant. Please describe your symptoms, and I'll help assess your condition. Remember, this is not a substitute for professional medical advice.",
+      text: "Hello! I'm your AI health assistant. Please describe your symptoms. Remember, this is not a substitute for professional medical advice.",
       isUser: false,
       timestamp: new Date()
     }
   ]);
   const [inputMessage, setInputMessage] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const commonSymptoms = [
-    { emoji: "🤒", text: "Fever", category: "general" },
-    { emoji: "🤕", text: "Headache", category: "general" },
-    { emoji: "😷", text: "Cough", category: "respiratory" },
-    { emoji: "🤧", text: "Cold", category: "respiratory" },
-    { emoji: "😵", text: "Nausea", category: "digestive" },
-    { emoji: "💔", text: "Chest Pain", category: "cardiac" },
-    { emoji: "🦵", text: "Joint Pain", category: "musculoskeletal" },
-    { emoji: "😴", text: "Fatigue", category: "general" }
+    { emoji: "🤒", text: "Fever" },
+    { emoji: "🤕", text: "Headache" },
+    { emoji: "😷", text: "Cough" },
+    { emoji: "🤧", text: "Cold" },
+    { emoji: "😵", text: "Nausea" },
+    { emoji: "💔", text: "Chest Pain" },
   ];
 
   const handleSendMessage = () => {
     if (!inputMessage.trim()) return;
 
     const userMessage: Message = {
-      id: messages.length + 1,
+      id: Date.now(),
       text: inputMessage,
       isUser: true,
       timestamp: new Date()
@@ -47,10 +51,9 @@ const SymptomChecker = () => {
     setMessages(prev => [...prev, userMessage]);
     setInputMessage("");
 
-    // Simulate AI response
     setTimeout(() => {
       const aiResponse: Message = {
-        id: messages.length + 2,
+        id: Date.now() + 1,
         text: generateAIResponse(inputMessage),
         isUser: false,
         timestamp: new Date()
@@ -63,125 +66,92 @@ const SymptomChecker = () => {
     const responses = [
       "I understand you're experiencing these symptoms. Can you tell me when they started and how severe they are on a scale of 1-10?",
       "Thank you for that information. Are you experiencing any additional symptoms like fever, chills, or changes in appetite?",
-      "Based on your symptoms, I recommend scheduling a consultation with one of our doctors. Would you like me to help you book an appointment?",
-      "Your symptoms warrant medical attention. I'm connecting you with our triage system to prioritize your care needs."
+      "Based on your symptoms, it would be best to schedule a consultation with one of our doctors. Would you like me to help you book an appointment?",
     ];
     return responses[Math.floor(Math.random() * responses.length)];
   };
 
   const handleSymptomClick = (symptom: string) => {
-    setInputMessage(symptom);
+    setInputMessage(prev => prev ? `${prev}, ${symptom}` : symptom);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-primary flex flex-col relative overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-gradient-glow opacity-20 animate-float"></div>
-
-      {/* Header */}
-      <div className="glass border-0 p-4 animate-fade-in">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => navigate('/home')}
-            className="w-10 h-10 rounded-full glass border-primary/30 flex items-center justify-center"
-          >
-            ←
-          </button>
-          <h1 className="font-orbitron text-xl font-bold text-foreground">
-            Symptom Checker
-          </h1>
-          <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center glow-primary">
-            🔍
+    <div className="flex flex-col h-screen bg-slate-950 text-slate-200 font-sans">
+      <header className="p-4 border-b border-slate-800 flex-shrink-0">
+        <div className="flex items-center justify-between max-w-4xl mx-auto">
+          <Button onClick={() => navigate('/home')} variant="outline" size="icon" className="bg-slate-900 border-slate-700 rounded-full">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-xl font-bold text-slate-50">AI Symptom Checker</h1>
+          <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-700 flex items-center justify-center">
+            <Bot className="h-5 w-5 text-green-500"/>
           </div>
         </div>
-      </div>
-
-      {/* Chat Messages */}
-      <div className="flex-1 mobile-padding overflow-y-auto">
-        <div className="space-y-4 pb-4">
+      </header>
+      <main className="flex-1 overflow-y-auto p-4">
+        <div className="space-y-6 max-w-4xl mx-auto">
           {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.isUser ? 'justify-end' : 'justify-start'} animate-scale-in`}
-            >
-              <Card
-                className={`max-w-[80%] p-4 border-0 ${
+            <div key={message.id} className={`flex items-end gap-3 ${message.isUser ? 'justify-end' : 'justify-start'}`}>
+              {!message.isUser && (
+                <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center flex-shrink-0">
+                  <Bot className="h-5 w-5 text-green-500" />
+                </div>
+              )}
+              <div
+                className={`max-w-[80%] p-3 rounded-2xl ${
                   message.isUser
-                    ? 'bg-white text-black shadow-lg'
-                    : 'glass'
+                    ? 'bg-green-800 text-white rounded-br-none' // CHANGED to a darker green
+                    : 'bg-slate-800 text-slate-200 rounded-bl-none'
                 }`}
               >
-                <p className={`text-sm ${
-                  message.isUser ? 'text-black' : 'text-foreground'
-                }`}>
-                  {message.text}
-                </p>
-                <p className={`text-xs mt-2 opacity-70 ${
-                  message.isUser ? 'text-primary-foreground' : 'text-muted-foreground'
+                <p className="text-sm">{message.text}</p>
+                <p className={`text-xs mt-2 text-right ${
+                    message.isUser ? 'text-green-200/70' : 'text-slate-400/70'
                 }`}>
                   {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </p>
-              </Card>
+              </div>
             </div>
           ))}
+          <div ref={messagesEndRef} />
         </div>
-
-        {/* Quick Symptoms */}
-        {messages.length === 1 && (
-          <div className="animate-fade-in">
-            <p className="text-foreground font-medium mb-4">
-              Quick symptom selection:
-            </p>
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              {commonSymptoms.map((symptom) => (
-                <button
-                  key={symptom.text}
-                  onClick={() => handleSymptomClick(symptom.text)}
-                  className="glass border-0 p-3 rounded-2xl text-left transition-all duration-300 hover:scale-105 glow-primary"
-                >
-                  <div className="flex items-center space-x-3">
-                    <span className="text-2xl">{symptom.emoji}</span>
-                    <span className="text-foreground text-sm font-medium">
-                      {symptom.text}
-                    </span>
-                  </div>
-                </button>
-              ))}
+      </main>
+      <footer className="p-4 border-t border-slate-800 flex-shrink-0">
+        <div className="max-w-4xl mx-auto">
+          {messages.length < 3 && (
+            <div className="mb-4">
+              <p className="text-slate-400 text-sm mb-3">Or, select a common symptom:</p>
+              <div className="flex flex-wrap gap-2">
+                {commonSymptoms.map((symptom) => (
+                  <button
+                    key={symptom.text}
+                    onClick={() => handleSymptomClick(symptom.text)}
+                    className="flex items-center space-x-2 bg-slate-800 border border-slate-700 px-3 py-2 rounded-full text-left transition-colors hover:bg-slate-700"
+                  >
+                    <span>{symptom.emoji}</span>
+                    <span className="text-slate-200 text-sm font-medium">{symptom.text}</span>
+                  </button>
+                ))}
+              </div>
             </div>
+          )}
+          <div className="flex items-center space-x-3">
+            <Input
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              placeholder="Describe your symptoms..."
+              className="flex-1 bg-slate-800 border-slate-700 rounded-full h-12 px-5 text-slate-200 placeholder:text-slate-500"
+              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+            />
+            <Button onClick={handleSendMessage} size="icon" className="w-12 h-12 rounded-full bg-green-600 hover:bg-green-700 flex-shrink-0">
+              <Send className="h-5 w-5" />
+            </Button>
+            <Button variant="outline" size="icon" className="w-12 h-12 rounded-full bg-slate-900 border-slate-700 hover:bg-slate-800 flex-shrink-0">
+              <Mic className="h-5 w-5" />
+            </Button>
           </div>
-        )}
-      </div>
-
-      {/* Message Input */}
-      <div className="glass border-0 p-4 animate-slide-in-right">
-        <div className="flex space-x-3">
-          <Input
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            placeholder="Describe your symptoms..."
-            className="flex-1 glass border-primary/30 rounded-2xl text-foreground placeholder:text-muted-foreground"
-            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-          />
-          <Button
-            onClick={handleSendMessage}
-            className="w-12 h-12 rounded-2xl bg-gradient-primary border-0 glow-primary hover:glow-accent transition-all duration-300"
-          >
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-            </svg>
-          </Button>
         </div>
-        
-        {/* Voice Input Button */}
-        <div className="flex justify-center mt-3">
-          <Button
-            variant="outline"
-            className="glass border-primary/30 rounded-2xl px-6 text-sm"
-          >
-            🎤 Voice Input
-          </Button>
-        </div>
-      </div>
+      </footer>
     </div>
   );
 };
